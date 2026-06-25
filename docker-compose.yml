@@ -1,0 +1,34 @@
+services:
+  api:
+    build: .
+    container_name: raizes-api
+    ports:
+      - "8000:8000"
+    environment:
+      # SQLite por padrão (persistido em volume).
+      DATABASE_URL: sqlite:////data/raizes.db
+      SECRET_KEY: troque_esta_chave_em_producao
+      AUTO_SEED: "true"
+    volumes:
+      - raizes_data:/data
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # Postgres OPCIONAL. Para usar:
+  #   1) descomente o serviço "db" abaixo e o depends_on/DATABASE_URL;
+  #   2) troque DATABASE_URL da api para a linha postgres;
+  #   3) adicione psycopg2-binary ao requirements.txt.
+  # ------------------------------------------------------------------
+  # db:
+  #   image: postgres:16-alpine
+  #   container_name: raizes-db
+  #   environment:
+  #     POSTGRES_USER: raizes
+  #     POSTGRES_PASSWORD: raizes
+  #     POSTGRES_DB: raizes
+  #   volumes:
+  #     - raizes_pg:/var/lib/postgresql/data
+
+volumes:
+  raizes_data:
+  # raizes_pg:
