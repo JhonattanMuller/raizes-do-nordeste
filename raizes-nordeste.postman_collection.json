@@ -1,0 +1,181 @@
+{
+  "info": {
+    "name": "Raizes do Nordeste API",
+    "_postman_id": "a1b2c3d4-0000-4000-8000-000000000002",
+    "description": "Coleção de testes da API Raízes do Nordeste (multiunidade, DDD). Variáveis: {{base_url}}. Login (cliente) salva {{token}}; Login Admin salva {{admin_token}}. Ordem sugerida: Auth > Unidades > Produtos > Pedidos > Pagamento > Fidelidade > Erros.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000" },
+    { "key": "token", "value": "" },
+    { "key": "admin_token", "value": "" },
+    { "key": "pedido_id", "value": "1" },
+    { "key": "unidade_id", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register Cliente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] },
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Maria\",\n  \"email\": \"maria@email.com\",\n  \"senha\": \"senha123\",\n  \"consentimentoLgpd\": true\n}" }
+          }
+        },
+        {
+          "name": "Login Cliente",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var j = pm.response.json();",
+            "if (j.accessToken) pm.collectionVariables.set('token', j.accessToken);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"maria@email.com\",\n  \"senha\": \"senha123\"\n}" }
+          }
+        },
+        {
+          "name": "Login Admin (seed)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var j = pm.response.json();",
+            "if (j.accessToken) pm.collectionVariables.set('admin_token', j.accessToken);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@raizes.com\",\n  \"senha\": \"admin123\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Unidades",
+      "item": [
+        { "name": "Listar Unidades", "request": { "method": "GET", "url": { "raw": "{{base_url}}/unidades", "host": ["{{base_url}}"], "path": ["unidades"] } } },
+        { "name": "Cardapio da Unidade", "request": { "method": "GET", "url": { "raw": "{{base_url}}/unidades/{{unidade_id}}/cardapio", "host": ["{{base_url}}"], "path": ["unidades", "{{unidade_id}}", "cardapio"] } } },
+        { "name": "Criar Unidade (Admin)", "request": {
+          "method": "POST",
+          "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+          "url": { "raw": "{{base_url}}/unidades", "host": ["{{base_url}}"], "path": ["unidades"] },
+          "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Unidade Natal - Ponta Negra\",\n  \"cidade\": \"Natal\"\n}" }
+        } }
+      ]
+    },
+    {
+      "name": "Produtos",
+      "item": [
+        { "name": "Listar Produtos (paginado)", "request": { "method": "GET", "url": { "raw": "{{base_url}}/produtos?page=1&limit=10", "host": ["{{base_url}}"], "path": ["produtos"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "10" }] } } },
+        { "name": "Criar Produto (Admin)", "request": {
+          "method": "POST",
+          "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+          "url": { "raw": "{{base_url}}/produtos", "host": ["{{base_url}}"], "path": ["produtos"] },
+          "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Cuscuz Nordestino\",\n  \"preco\": 10.5\n}" }
+        } }
+      ]
+    },
+    {
+      "name": "Estoque",
+      "item": [
+        { "name": "Consultar Estoque da Unidade", "request": { "method": "GET", "url": { "raw": "{{base_url}}/estoque/{{unidade_id}}", "host": ["{{base_url}}"], "path": ["estoque", "{{unidade_id}}"] } } },
+        { "name": "Movimentar Estoque (Admin)", "request": {
+          "method": "POST",
+          "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+          "url": { "raw": "{{base_url}}/estoque/{{unidade_id}}/movimentar", "host": ["{{base_url}}"], "path": ["estoque", "{{unidade_id}}", "movimentar"] },
+          "body": { "mode": "raw", "raw": "{\n  \"produtoId\": 1,\n  \"tipo\": \"ENTRADA\",\n  \"quantidade\": 20\n}" }
+        } }
+      ]
+    },
+    {
+      "name": "Pedidos",
+      "item": [
+        { "name": "Criar Pedido", "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var j = pm.response.json();",
+            "if (j.pedidoId) pm.collectionVariables.set('pedido_id', j.pedidoId);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/pedidos", "host": ["{{base_url}}"], "path": ["pedidos"] },
+            "body": { "mode": "raw", "raw": "{\n  \"canalPedido\": \"TOTEM\",\n  \"unidadeId\": 1,\n  \"itens\": [\n    { \"produtoId\": 1, \"quantidade\": 2 }\n  ],\n  \"formaPagamento\": \"MOCK\"\n}" }
+          } },
+        { "name": "Listar Pedidos (filtro canal+status)", "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/pedidos?canalPedido=TOTEM&status=AGUARDANDO_PAGAMENTO", "host": ["{{base_url}}"], "path": ["pedidos"], "query": [{ "key": "canalPedido", "value": "TOTEM" }, { "key": "status", "value": "AGUARDANDO_PAGAMENTO" }] }
+          } },
+        { "name": "Obter Pedido", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{base_url}}/pedidos/{{pedido_id}}", "host": ["{{base_url}}"], "path": ["pedidos", "{{pedido_id}}"] } } },
+        { "name": "Atualizar Status (Admin)", "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/pedidos/{{pedido_id}}/status", "host": ["{{base_url}}"], "path": ["pedidos", "{{pedido_id}}", "status"] },
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"EM_PREPARO\"\n}" }
+          } },
+        { "name": "Cancelar Pedido", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{base_url}}/pedidos/{{pedido_id}}/cancelar", "host": ["{{base_url}}"], "path": ["pedidos", "{{pedido_id}}", "cancelar"] } } }
+      ]
+    },
+    {
+      "name": "Pagamento",
+      "item": [
+        { "name": "Pagamento Aprovado", "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/pagamentos/{{pedido_id}}", "host": ["{{base_url}}"], "path": ["pagamentos", "{{pedido_id}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"aprovar\": true\n}" }
+          } },
+        { "name": "Pagamento Recusado", "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/pagamentos/{{pedido_id}}", "host": ["{{base_url}}"], "path": ["pagamentos", "{{pedido_id}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"aprovar\": false\n}" }
+          } }
+      ]
+    },
+    {
+      "name": "Fidelidade",
+      "item": [
+        { "name": "Saldo de Pontos", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{base_url}}/fidelidade/saldo", "host": ["{{base_url}}"], "path": ["fidelidade", "saldo"] } } },
+        { "name": "Resgatar Pontos", "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/fidelidade/resgatar", "host": ["{{base_url}}"], "path": ["fidelidade", "resgatar"] },
+            "body": { "mode": "raw", "raw": "{\n  \"pontos\": 5\n}" }
+          } }
+      ]
+    },
+    {
+      "name": "Erros",
+      "item": [
+        { "name": "401 - Listar Pedidos sem token", "request": { "method": "GET", "url": { "raw": "{{base_url}}/pedidos", "host": ["{{base_url}}"], "path": ["pedidos"] } } },
+        { "name": "403 - Cliente cria produto", "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/produtos", "host": ["{{base_url}}"], "path": ["produtos"] },
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Proibido\",\n  \"preco\": 1\n}" }
+          } },
+        { "name": "404 - Pedido em unidade inexistente", "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/pedidos", "host": ["{{base_url}}"], "path": ["pedidos"] },
+            "body": { "mode": "raw", "raw": "{\n  \"canalPedido\": \"APP\",\n  \"unidadeId\": 999,\n  \"itens\": [{ \"produtoId\": 1, \"quantidade\": 1 }]\n}" }
+          } },
+        { "name": "409 - Estoque insuficiente", "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/pedidos", "host": ["{{base_url}}"], "path": ["pedidos"] },
+            "body": { "mode": "raw", "raw": "{\n  \"canalPedido\": \"APP\",\n  \"unidadeId\": 1,\n  \"itens\": [{ \"produtoId\": 1, \"quantidade\": 999999 }]\n}" }
+          } },
+        { "name": "422 - canalPedido ausente", "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/pedidos", "host": ["{{base_url}}"], "path": ["pedidos"] },
+            "body": { "mode": "raw", "raw": "{\n  \"unidadeId\": 1,\n  \"itens\": [{ \"produtoId\": 1, \"quantidade\": 1 }]\n}" }
+          } }
+      ]
+    }
+  ]
+}
